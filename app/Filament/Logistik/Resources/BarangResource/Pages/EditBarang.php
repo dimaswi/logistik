@@ -12,6 +12,11 @@ class EditBarang extends EditRecord
 
     protected static ?string $title = 'Edit Barang';
 
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
+
     protected function getHeaderActions(): array
     {
         return [

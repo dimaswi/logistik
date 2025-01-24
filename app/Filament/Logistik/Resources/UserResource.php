@@ -4,6 +4,7 @@ namespace App\Filament\Logistik\Resources;
 
 use App\Filament\Logistik\Resources\UserResource\Pages;
 use App\Filament\Logistik\Resources\UserResource\RelationManagers;
+use App\Models\Organisasi;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Components\Card;
@@ -14,6 +15,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\ActionGroup;
+use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -39,7 +41,8 @@ class UserResource extends Resource
             ->schema([
                 Card::make()->schema([
                     TextInput::make('name')->required()->placeholder('Masukan Nama'),
-                    TextInput::make('email')->required()->placeholder('Masukan Email')->type('email'),
+                    TextInput::make('nip')->required()->placeholder('Masukan NIP'),
+                    Select::make('organisasi')->required()->options(Organisasi::all()->pluck('nama', 'id'))->label('Organisasi')->searchable(),
                     TextInput::make('password')->type('password')->required()->placeholder('Masukan Password')->hiddenOn('edit'),
                 ])
             ]);
@@ -64,7 +67,12 @@ class UserResource extends Resource
                     ->sortable(),
                 TextColumn::make('password')
                     ->limit(10)
-                    ->badge()
+                    ->badge(),
+                TextColumn::make('org.kode')
+                    ->label('Kode Organiasasi')
+                    ->badge(),
+                ImageColumn::make('org.kop')
+                    ->label('Organisasi')
 
             ])
             ->filters([

@@ -6,6 +6,7 @@ use App\Filament\Logistik\Resources\PermintaanResource\Pages;
 use App\Filament\Logistik\Resources\PermintaanResource\RelationManagers;
 use App\Models\Barang;
 use App\Models\DetilPermintaan;
+use App\Models\Organisasi;
 use App\Models\Permintaan;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -22,6 +23,7 @@ use Filament\Support\RawJs;
 use Filament\Tables;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\ActionGroup;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Icetalker\FilamentTableRepeater\Forms\Components\TableRepeater;
@@ -44,7 +46,8 @@ class PermintaanResource extends Resource
 
     public static function form(Form $form): Form
     {
-        $data = Permintaan::where('unit', auth()->user()->unit)->orderBy('id', 'desc')->first();
+        $data = Permintaan::where('organisasi', auth()->user()->organisasi)->orderBy('id', 'desc')->first();
+        $organisasi = Organisasi::where('id', auth()->user()->organisasi)->first();
 
         if (empty($data)) {
             $nomor = 1;
@@ -60,12 +63,12 @@ class PermintaanResource extends Resource
                 Card::make()->schema([
                     Hidden::make('nomor')->default($nomor),
                     Hidden::make('oleh')->default(auth()->user()->id),
-                    Hidden::make('unit')->default(auth()->user()->unit),
+                    Hidden::make('organisasi')->default($organisasi->id),
                     TextInput::make('nomor_permintaan')
                         ->label('Nomor Permintaan')
                         ->placeholder('Masukan Nomor Permintaan')
                         ->required()
-                        ->default('SP/' . $nomor . '/' . auth()->user()->unit . '/' . Carbon::now('Asia/Jakarta')->format('m') . '/' . Carbon::now('Asia/Jakarta')->format('Y'))
+                        ->default('SP/' . $nomor . '/' . $organisasi->kode . '/' . Carbon::now('Asia/Jakarta')->format('m') . '/' . Carbon::now('Asia/Jakarta')->format('Y'))
                         ->readOnly(),
                     DatePicker::make('tanggal')
                         ->label('Tanggal')
@@ -115,8 +118,22 @@ class PermintaanResource extends Resource
             )
             ->columns([
                 TextColumn::make('nomor_permintaan')->searchable()->badge(),
-                TextColumn::make('unit')->label('Unit Pemohon'),
+                TextColumn::make('org.nama')->label('Unit Pemohon'),
                 TextColumn::make('user.name')->searchable()->label('Pemohon'),
+                IconColumn::make('status')
+                    ->icon(fn(string $state): string => match ($state) {
+                        '0' => 'heroicon-o-clock',
+                        '1' => 'heroicon-o-check-circle',
+                        '2' => 'heroicon-o-pencil-square',
+                        '99' => 'heroicon-o-x-circle',
+                    })
+                    ->color(fn(string $state): string => match ($state) {
+                        '0' => 'info',
+                        '1' => 'success',
+                        '2' => 'warning',
+                        '99' => 'danger',
+                    })
+                    ->alignCenter()
             ])
             ->filters([
                 //
@@ -130,15 +147,19 @@ class PermintaanResource extends Resource
                         ->color('success')
                         ->action(
                             function (Permintaan $record) {
-                                $pdf = Pdf::loadView('logistik.permintaan.surat.surat_permintaan',
-                                [
-                                    'permintaan' => $record->toArray(),
-                                    'detilPermintaan' => DetilPermintaan::where('id_permintaan', $record->id)->get()->toArray(),
-                                ]
+                                $organisasi = Organisasi::where('id',auth()->user()->organisasi)->first();
+                                $pdf = Pdf::loadView(
+                                    'logistik.permintaan.surat.surat_permintaan',
+                                    [
+                                        'permintaan' => $record->toArray(),
+                                        'organisasi' => $organisasi,
+                                        'kop' => base64_encode(file_get_contents(url('/storage/app/public/'.$organisasi->kop))),
+                                        'detilPermintaan' => DetilPermintaan::where('id_permintaan', $record->id)->get()->toArray(),
+                                    ]
                                 );
                                 return response()->streamDownload(function () use ($pdf) {
                                     echo $pdf->stream();
-                                    }, $record->id.'.pdf');
+                                }, $record->id . '.pdf');
                             }
                         )
                 ])

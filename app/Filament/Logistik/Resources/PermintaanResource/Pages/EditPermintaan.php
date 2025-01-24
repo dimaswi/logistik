@@ -12,6 +12,11 @@ class EditPermintaan extends EditRecord
 
     protected static ?string $title = 'Edit Permintaan';
 
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
+
     protected function getHeaderActions(): array
     {
         return [

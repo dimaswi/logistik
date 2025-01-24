@@ -45,11 +45,6 @@ class BarangResource extends Resource
                         ->label('Nama Barang')
                         ->placeholder('Masukan Nama Barang')
                         ->columnSpanFull(),
-                    TextInput::make('stok')
-                        ->label('Stok')
-                        ->placeholder('Masukan Stok Barang')
-                        ->required()
-                        ->numeric(),
                     TextInput::make('harga')
                         ->label('Harga')
                         ->mask(RawJs::make('$money($input)'))
@@ -75,7 +70,6 @@ class BarangResource extends Resource
             )
             ->columns([
                 TextColumn::make('nama_barang')->searchable()->sortable(),
-                TextColumn::make('stok')->numeric()->badge(),
                 TextColumn::make('satuan_barang.satuan_barang')->numeric()->badge(),
                 TextColumn::make('harga')->money('IDR')->badge(),
             ])

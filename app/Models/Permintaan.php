@@ -20,7 +20,7 @@ class Permintaan extends Model
         'tanggal',
         'oleh',
         'status',
-        'unit',
+        'organisasi',
     ];
 
     public function detilPermintaan()
@@ -31,5 +31,10 @@ class Permintaan extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'oleh');
+    }
+
+    public function org()
+    {
+        return $this->belongsTo(Organisasi::class, 'organisasi');
     }
 }
