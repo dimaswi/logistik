@@ -11,6 +11,6 @@
             </x-filament::button>
         </x-slot>
 
-        <livewire:pengadaan.serahterimaaset :key="Str::random()" :id="$getRecord()->id" :idpengadaan="$getRecord()->id_pengadaan"/>
+        <livewire:pengadaan.serah-terima-aset :key="Str::random()" :id="$getRecord()->id" :idpengadaan="$getRecord()->id_pengadaan"/>
     </x-filament::modal>
 </div>
