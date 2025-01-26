@@ -17,8 +17,6 @@ class DetilPermintaan extends Model
     protected $fillable = [
         'id_permintaan',
         'id_barang',
-        'harga_baru',
-        'harga_lama',
         'jumlah',
     ];
 

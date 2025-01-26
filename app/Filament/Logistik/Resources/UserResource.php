@@ -44,6 +44,9 @@ class UserResource extends Resource
                     TextInput::make('nip')->required()->placeholder('Masukan NIP'),
                     Select::make('organisasi')->required()->options(Organisasi::all()->pluck('nama', 'id'))->label('Organisasi')->searchable(),
                     TextInput::make('password')->type('password')->required()->placeholder('Masukan Password')->hiddenOn('edit'),
+                    Forms\Components\CheckboxList::make('roles')
+                        ->relationship('roles', 'name')
+                        ->searchable(),
                 ])
             ]);
     }

@@ -7,6 +7,7 @@ use App\Filament\Logistik\Resources\BarangResource\RelationManagers;
 use App\Models\Barang;
 use App\Models\JenisBarang;
 use App\Models\SatuanBarang;
+use App\Models\Stok;
 use Filament\Forms;
 use Filament\Forms\Components\Card;
 use Filament\Forms\Components\Select;
@@ -19,6 +20,7 @@ use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class BarangResource extends Resource
@@ -66,7 +68,7 @@ class BarangResource extends Resource
     {
         return $table
             ->recordUrl(
-                fn () => null
+                fn() => null
             )
             ->columns([
                 TextColumn::make('nama_barang')->searchable()->sortable(),

@@ -58,7 +58,6 @@ class OrganisasiResource extends Resource
                         ->label('KOP Oraganisasi')
                         ->downloadable()
                         ->previewable()
-                        ->disk('asset')
                         ->directory('kop')
                         ->columnSpanFull(),
                     Select::make('tingkat')

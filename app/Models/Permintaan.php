@@ -19,6 +19,7 @@ class Permintaan extends Model
         'nomor_permintaan',
         'tanggal',
         'oleh',
+        // 'kepala',
         'status',
         'organisasi',
     ];

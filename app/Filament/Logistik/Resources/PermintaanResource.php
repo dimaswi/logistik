@@ -7,7 +7,12 @@ use App\Filament\Logistik\Resources\PermintaanResource\RelationManagers;
 use App\Models\Barang;
 use App\Models\DetilPermintaan;
 use App\Models\Organisasi;
+use App\Models\PenerimaanPermintaan;
+use App\Models\PenolakanPermintaan;
 use App\Models\Permintaan;
+use App\Models\Stok;
+use App\Models\User;
+use App\Tables\Columns\Permintaan\CheckStok;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Filament\Forms;
@@ -16,8 +21,10 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Support\RawJs;
 use Filament\Tables;
@@ -28,6 +35,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Icetalker\FilamentTableRepeater\Forms\Components\TableRepeater;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class PermintaanResource extends Resource
@@ -75,6 +83,14 @@ class PermintaanResource extends Resource
                         ->placeholder('Masukan Tanggal')
                         ->default(Carbon::now('Asia/Jakarta'))
                         ->required(),
+                    // Select::make('kepala')
+                    //     ->label('Kepala')
+                    //     ->searchable()
+                    //     ->helperText('Untuk mengetahui atasan.')
+                    //     ->hintColor('danger')
+                    //     ->options(
+                    //         Organisasi::all()->pluck('nama', 'id')
+                    //     ),
                     TableRepeater::make('detil_permintaan')
                         ->label('Barang Permintaan')
                         ->relationship('detilPermintaan')
@@ -89,23 +105,12 @@ class PermintaanResource extends Resource
                                 ->label('Jumlah')
                                 ->placeholder('Masukan Jumlah')
                                 ->required(),
-                            TextInput::make('harga_baru')
-                                ->label('Harga Baru')
-                                ->placeholder('Masukan Harga Baru')
-                                ->mask(RawJs::make('$money($input)'))
-                                ->stripCharacters(',')
-                                ->required(),
-                            TextInput::make('harga_lama')
-                                ->label('Harga Lama')
-                                ->placeholder('Masukan Harga Lama')
-                                ->mask(RawJs::make('$money($input)'))
-                                ->stripCharacters(',')
-                                ->required(),
                         ])
                         ->reorderable()
                         ->cloneable()
                         ->collapsible()
                         ->columnSpan('full')
+                        ->addActionLabel('Tambah')
                 ])->columns(2)
             ]);
     }
@@ -116,7 +121,20 @@ class PermintaanResource extends Resource
             ->recordUrl(
                 fn() => null
             )
+            ->modifyQueryUsing(
+                function (Builder $query) {
+                    if (!auth()->user()->hasRole('Logistik')) {
+                        return $query->where('oleh', auth()->user()->id);
+                    } else {
+                        return $query;
+                    }
+                }
+            )
             ->columns([
+                TextColumn::make('index')
+                    ->label('No.')
+                    ->rowIndex()
+                    ->alignCenter(),
                 TextColumn::make('nomor_permintaan')->searchable()->badge(),
                 TextColumn::make('org.nama')->label('Unit Pemohon'),
                 TextColumn::make('user.name')->searchable()->label('Pemohon'),
@@ -133,41 +151,203 @@ class PermintaanResource extends Resource
                         '2' => 'warning',
                         '99' => 'danger',
                     })
-                    ->alignCenter()
+                    ->alignCenter(),
+                CheckStok::make('check')
+                    ->alignCenter(),
             ])
             ->filters([
                 //
             ])
             ->actions([
                 ActionGroup::make([
-                    Tables\Actions\EditAction::make()->color('warning'),
-                    Action::make('surat')
-                        ->label('Memo Permintaan')
-                        ->icon('heroicon-o-paper-clip')
-                        ->color('success')
-                        ->action(
+                    Tables\Actions\EditAction::make()
+                        ->color('info')
+                        ->hidden(
                             function (Permintaan $record) {
-                                $organisasi = Organisasi::where('id',auth()->user()->organisasi)->first();
-                                $pdf = Pdf::loadView(
-                                    'logistik.permintaan.surat.surat_permintaan',
-                                    [
-                                        'permintaan' => $record->toArray(),
-                                        'organisasi' => $organisasi,
-                                        'kop' => base64_encode(file_get_contents(url('/storage/app/public/'.$organisasi->kop))),
-                                        'detilPermintaan' => DetilPermintaan::where('id_permintaan', $record->id)->get()->toArray(),
-                                    ]
-                                );
-                                return response()->streamDownload(function () use ($pdf) {
-                                    echo $pdf->stream();
-                                }, $record->id . '.pdf');
+                                return $record->oleh != auth()->user()->id or $record->status != 0;
+                            }
+                        ),
+                    Action::make('setuju')
+                        ->label('Setuju')
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
+                        ->form([
+                            Select::make('penerima')
+                                ->label('Penerima')
+                                ->searchable()
+                                ->options(User::all()->pluck('name', 'id'))
+                                ->required(),
+                            Textarea::make('keterangan')
+                                ->label('Keterangan')
+                                ->placeholder('Masukan Keterangan')
+                        ])
+                        ->action(
+                            function (array $data, Permintaan $record) {
+                                try {
+
+                                    $detail_permintaan = DetilPermintaan::where('id_permintaan', $record->id)->get();
+                                    $check_stok = [];
+
+                                    foreach ($detail_permintaan as $key => $value) {
+                                        $stok_gudang = Stok::where('organisasi', '9e06eeba-d0ce-40d0-8f3f-f0fba0dde023')
+                                            ->where('barang', $value->id_barang)
+                                            ->first();
+                                        $stok = Stok::where('organisasi', $record->organisasi)
+                                            ->where('barang', $value->id_barang)
+                                            ->first();
+
+                                        $check = $stok_gudang->stok < $value->jumlah ? 0 : 1;
+
+                                        array_push($check_stok, $check);
+
+                                        if ($stok_gudang->stok > (int)$value->jumlah) {
+                                            if (!$stok) {
+                                                Stok::create([
+                                                    'barang' => $value->id_barang,
+                                                    'organisasi' => $record->organisasi,
+                                                    'stok' => $value->jumlah,
+                                                ]);
+
+                                                Stok::where('organisasi', '9e06eeba-d0ce-40d0-8f3f-f0fba0dde023')->where('barang', $value->id_barang)->update([
+                                                    'stok' => $stok_gudang->stok - $value->jumlah,
+                                                ]);
+                                            } else {
+                                                Stok::where('organisasi', $record->organisasi)->where('barang', $value->id_barang)->update([
+                                                    'stok' => $stok->stok + $value->jumlah,
+                                                ]);
+
+                                                Stok::where('organisasi', '9e06eeba-d0ce-40d0-8f3f-f0fba0dde023')->where('barang', $value->id_barang)->update([
+                                                    'stok' => $stok_gudang->stok - $value->jumlah,
+                                                ]);
+                                            }
+                                        } else {
+
+                                        }
+                                    }
+
+                                    if (in_array(0, $check_stok) == true) {
+                                        Notification::make()
+                                            ->title('Stok digudang kosong!')
+                                            ->danger()
+                                            ->send();
+                                    } else {
+                                        PenerimaanPermintaan::create([
+                                            'id_permintaan' => $record->id,
+                                            'penerima' => $data['penerima'],
+                                            'keterangan' => $data['keterangan'],
+                                        ]);
+
+                                        Permintaan::where('id', '=', $record->id)->update([
+                                            'status' => 1,
+                                        ]);
+
+                                        Notification::make()
+                                            ->title('Permintaan disetujui!')
+                                            ->success()
+                                            ->send();
+                                    }
+                                } catch (\Throwable $th) {
+                                    Notification::make()
+                                        ->title($th->getMessage())
+                                        ->danger()
+                                        ->send();
+                                }
                             }
                         )
+                        ->hidden(
+                            function (Permintaan $record) {
+                                if (!auth()->user()->hasRole('Logistik')) {
+                                    return $record->status >= 0;
+                                } else {
+                                    return $record->status != 0;
+                                }
+                            }
+                        ),
+                    Action::make('tolak')
+                        ->label('Tolak')
+                        ->icon('heroicon-o-x-circle')
+                        ->color('danger')
+                        ->form([
+                            Textarea::make('keterangan')
+                                ->label('Keterangan')
+                                ->required()
+                                ->placeholder('Masukan Keterangan')
+                        ])
+                        ->action(
+                            function (array $data, Permintaan $record) {
+                                try {
+                                    PenolakanPermintaan::create([
+                                        'id_permintaan' => $record->id,
+                                        'oleh' => auth()->user()->id,
+                                        'keterangan' => $data['keterangan'],
+                                    ]);
+
+                                    Permintaan::where('id', '=', $record->id)->update([
+                                        'status' => 99,
+                                    ]);
+
+                                    Notification::make()
+                                        ->title('Permintaan ditolak!')
+                                        ->danger()
+                                        ->send();
+                                } catch (\Throwable $th) {
+                                    Notification::make()
+                                        ->title($th->getMessage())
+                                        ->danger()
+                                        ->send();
+                                }
+                            }
+                        )
+                        ->hidden(
+                            function (Permintaan $record) {
+                                if (!auth()->user()->hasRole('Logistik')) {
+                                    return $record->status >= 0;
+                                } else {
+                                    return $record->status != 0;
+                                }
+                            }
+                        ),
+                    // Action::make('revisi')
+                    //     ->label('Revisi')
+                    //     ->icon('heroicon-o-pencil')
+                    //     ->color('warning'),
+                    // Action::make('surat')
+                    //     ->label('Memo Permintaan')
+                    //     ->icon('heroicon-o-paper-clip')
+                    //     ->color('success')
+                    //     ->action(
+                    //         function (Permintaan $record) {
+                    //             $organisasi = Organisasi::where('id', auth()->user()->organisasi)->first();
+                    //             $organisasi_kepala = Organisasi::where('id', $record->kepala)->first();
+                    //             $nama_kepala = User::where('id', $organisasi_kepala->pimpinan)->first();
+                    //             $contxt = stream_context_create([
+                    //                 'ssl' => [
+                    //                     'verify_peer' => FALSE,
+                    //                     'verify_peer_name' => FALSE,
+                    //                     'allow_self_signed' => TRUE
+                    //                 ]
+                    //             ]);
+                    //             $pdf = Pdf::setOptions(['isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true])->loadView(
+                    //                 'logistik.permintaan.surat.surat_permintaan',
+                    //                 [
+                    //                     'permintaan' => $record,
+                    //                     'organisasi' => $organisasi,
+                    //                     'kepala' => array($organisasi_kepala, $nama_kepala),
+                    //                     // 'kop' => base64_encode(url('/storage/'.$organisasi->kop)),
+                    //                     'detilPermintaan' => DetilPermintaan::with('barang')->where('id_permintaan', $record->id)->get(),
+                    //                 ]
+                    //             )->setHttpContext($contxt);
+                    //             return response()->streamDownload(function () use ($pdf) {
+                    //                 echo $pdf->stream();
+                    //             }, $record->id . '.pdf');
+                    //         }
+                    //     )
                 ])
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
+                // Tables\Actions\BulkActionGroup::make([
+                //     Tables\Actions\DeleteBulkAction::make(),
+                // ]),
             ]);
     }
 
