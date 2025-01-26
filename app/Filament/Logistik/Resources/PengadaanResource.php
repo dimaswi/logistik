@@ -76,7 +76,7 @@ class PengadaanResource extends Resource
                     Select::make('kepala')
                         ->label('Atasan')
                         ->searchable()
-                        ->options(Organisasi::where('tingkat', 'Bagian')->get()->pluck('nama', 'id'))
+                        ->options(Organisasi::where('tingkat', 'Bagian')->get()->pluck('nama', 'pimpinan'))
                         ->required(),
                     Textarea::make('perihal')
                         ->label('Perihal')
