@@ -7,17 +7,20 @@ use App\Filament\Logistik\Resources\PengadaanResource\RelationManagers;
 use App\Models\Organisasi;
 use App\Models\Pengadaan;
 use App\Models\PengadaanDetil;
+use App\Models\RencanaAnggaranBelanjaDetil;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Components\Card;
+use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Support\RawJs;
@@ -83,13 +86,72 @@ class PengadaanResource extends Resource
                         ->required()
                         ->placeholder('Masukan Perihal')
                         ->columnSpanFull(),
+                    Checkbox::make('rab')
+                    ->label('RAB')
+                    ->live(),
                     TableRepeater::make('detil_pengadaan')
-                        ->label('Detil Pengadaan')
+                        ->label('Detil Pengadaan Baru')
                         ->relationship('detilPengadaan')
                         ->dehydrated(true)
+                        ->live()
+                        ->hidden(
+                            function (Get $get, $set) {
+                                return $get('rab') != null;
+                            }
+                        )
                         ->schema([
                             TextInput::make('nama_barang')
                                 ->required()
+                                ->label('Nama Barang')
+                                ->placeholder('Masukan Nama Barang'),
+                            TextInput::make('merk')
+                                ->required()
+                                ->label('Merk Barang')
+                                ->placeholder('Masukan Merk Barang'),
+                            TextInput::make('jumlah')
+                                ->required()
+                                ->numeric()
+                                ->label('Jumlah Barang')
+                                ->placeholder('Masukan Jumlah Barang'),
+                            TextInput::make('harga')
+                                ->required()
+                                ->label('Harga Barang')
+                                ->mask(RawJs::make('$money($input)'))
+                                ->numeric()
+                                ->stripCharacters(',')
+                                ->placeholder('Masukan Harga Barang'),
+                        ])->colStyles([
+                            'nama_barang' => 'width: 40%;',
+                            'merk' => 'width: 30%;',
+                            'harga' => 'width: 30%;',
+                        ])->addActionLabel('Tambah'),
+                    TableRepeater::make('detil_pengadaan_rab')
+                        ->label('Detil Pengadaan Rencana Anggaran Belanja')
+                        ->relationship('detilPengadaan')
+                        ->dehydrated(true)
+                        ->live()
+                        ->hidden(
+                            function (Get $get) {
+                                return $get('rab') == null;
+                            }
+                        )
+                        ->schema([
+                            Hidden::make('barang_rab'),
+                            Hidden::make('nama_barang'),
+                            Select::make('list_barang')
+                                ->required()
+                                ->options(
+                                    RencanaAnggaranBelanjaDetil::all()->pluck('nama_barang', 'id')
+                                )
+                                ->afterStateUpdated(function ($state, callable $set) {
+                                    $barang = RencanaAnggaranBelanjaDetil::where('id', $state)->first();
+                                    $set('barang_rab', $barang->id);
+                                    $set('nama_barang', $barang->nama_barang);
+                                    $set('merk', $barang->merk);
+                                    $set('jumlah', $barang->jumlah);
+                                    $set('harga', $barang->harga);
+                                })
+                                ->live()
                                 ->label('Nama Barang')
                                 ->placeholder('Masukan Nama Barang'),
                             TextInput::make('merk')

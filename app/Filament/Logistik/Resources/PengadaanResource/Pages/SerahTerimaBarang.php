@@ -40,7 +40,8 @@ class SerahTerimaBarang extends Page implements HasForms, HasTable
             ->paginated(false)
             ->query(PengadaanDetil::with(['pengadaan' => function ($query) {
                 $query->with('pemohon');
-            }])->where('serah_terima', 0))
+            }])->with('rab')->where('serah_terima', 0))
+
             ->columns([
                 TextColumn::make('index')
                     ->rowIndex()

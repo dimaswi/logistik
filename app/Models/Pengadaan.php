@@ -24,6 +24,7 @@ class Pengadaan extends Model
         'nomor',
         'nominal',
         'status',
+        'rab',
         'persetujuan',
     ];
 

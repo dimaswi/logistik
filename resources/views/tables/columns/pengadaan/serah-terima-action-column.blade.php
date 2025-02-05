@@ -1,3 +1,7 @@
+@php
+    // dump($getRecord())
+@endphp
+
 <div>
     <x-filament::modal slide-over width="7xl" sticky-header>
 
