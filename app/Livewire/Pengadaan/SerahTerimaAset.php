@@ -30,12 +30,18 @@ class SerahTerimaAset extends Component implements HasForms
 
     public ?array $data = [];
 
+    public $data_pengadaan;
     public $id;
 
     public $idpengadaan;
 
+    protected $listeners = [
+        'reload' => '$refresh'
+    ];
+
     public function mount(): void
     {
+        $this->data_pengadaan = PengadaanDetil::with('pengadaan')->where('id', $this->id)->first();
         $this->form->fill();
     }
 
@@ -125,22 +131,26 @@ class SerahTerimaAset extends Component implements HasForms
                         'nomor' => $nomor,
                         'lokasi' => $value['ruangan'],
                         'organisasi' => $pengadaan->organisasi,
-                        'tanggal_pembelian' =>  $this->form->getState()['tanggal_pembelian'] ,
+                        'tanggal_pembelian' =>  $this->form->getState()['tanggal_pembelian'],
                         'tanggal_serah_terima' =>  $this->form->getState()['tanggal_serah_terima'],
                         'harga_pembelian' => $value['harga'],
                     ]);
                 }
             }
-            $pengadaan = PengadaanDetil::where('id', $this->id)->first();
+            $pengadaan_detil = PengadaanDetil::where('id', $this->id)->first();
 
-            // dd(count($realisasi_item), count($pending_item));
+            $pengadaan_detil->update([
+                'realisasi' => $pengadaan_detil->realisasi + count($realisasi_item),
+                'jumlah' => $pengadaan_detil->jumlah - count($realisasi_item),
+            ]);
+
             $pengadaan->update([
-                'realisasi' => $pengadaan->realisasi + count($realisasi_item),
-                'jumlah' => $pengadaan->jumlah - count($realisasi_item),
+                'tanggal_serah_terima' => $this->form->getState()['tanggal_serah_terima'],
+                'persetujuan' => 1
             ]);
 
             if (count($pending_item) == 0) {
-                $pengadaan->update([
+                $pengadaan_detil->update([
                     'serah_terima' => 1,
                 ]);
             }
@@ -156,6 +166,8 @@ class SerahTerimaAset extends Component implements HasForms
                 ->title('Berhasil Diserahkan!')
                 ->success()
                 ->send();
+
+            $this->dispatch('reload');
         } catch (\Throwable $th) {
             Notification::make()
                 ->title('Gagal!')
@@ -164,6 +176,47 @@ class SerahTerimaAset extends Component implements HasForms
                 ->send();
         }
     }
+
+    public function setujui(): void
+    {
+        try {
+            $barang = PengadaanDetil::with('pengadaan')->where('id', $this->id)->first();
+
+            if ($barang->pengadaan->oleh == auth()->user()->id) {
+                $barang->update([
+                    'ttd_pemohon' => 1,
+                ]);
+            }
+
+            if ($barang->pengadaan->kepala == auth()->user()->id) {
+                $barang->update([
+                    'ttd_atasan' => 1,
+                ]);
+            }
+
+            if (auth()->user()->hasRole('Logistik')) {
+                $barang->update([
+                    'ttd_logistik' => 1,
+                    'ttd_keuangan' => 1,
+                ]);
+            }
+
+            Notification::make()
+                ->title('Berhasil')
+                ->body('Barang Berhasil Disetujui')
+                ->success()
+                ->send();
+
+            $this->dispatch('reload');
+        } catch (\Throwable $th) {
+            Notification::make()
+                ->title('Gagal!')
+                ->body($th->getMessage())
+                ->danger()
+                ->send();
+        }
+    }
+
     public function render()
     {
         return view('livewire.pengadaan.serah-terima-aset');

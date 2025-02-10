@@ -41,8 +41,8 @@ class LogistikPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Logistik/Widgets'), for: 'App\\Filament\\Logistik\\Widgets')
             ->widgets([
-                Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
+                // Widgets\AccountWidget::class,
+                // Widgets\FilamentInfoWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,

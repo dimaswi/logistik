@@ -26,6 +26,7 @@ class Pengadaan extends Model
         'status',
         'rab',
         'persetujuan',
+        'tanggal_serah_terima',
     ];
 
     public function detilPengadaan()
@@ -47,4 +48,5 @@ class Pengadaan extends Model
     {
         return $this->belongsTo(User::class, 'kepala');
     }
+
 }

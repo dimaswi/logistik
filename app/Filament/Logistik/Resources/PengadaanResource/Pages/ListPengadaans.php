@@ -37,7 +37,7 @@ class ListPengadaans extends ListRecords
                 'Logistik' => Tab::make()
                     ->modifyQueryUsing(fn(Builder $query) => $query->where('organisasi', '9e06eeba-d0ce-40d0-8f3f-f0fba0dde023')),
                 'All' => Tab::make()
-                    ->modifyQueryUsing(fn(Builder $query) => $query->where('organisasi', '!=', '9e06eeba-d0ce-40d0-8f3f-f0fba0dde023')->where('persetujuan', '!=', 0)),
+                    ->modifyQueryUsing(fn(Builder $query) => $query),
             ];
         }
         return [

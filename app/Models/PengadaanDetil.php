@@ -23,6 +23,10 @@ class PengadaanDetil extends Model
         'realisasi',
         'serah_terima',
         'harga',
+        'ttd_pemohon',
+        'ttd_atasan',
+        'ttd_logistik',
+        'ttd_keuangan',
     ];
 
     public function pengadaan()
@@ -33,5 +37,10 @@ class PengadaanDetil extends Model
     public function rab()
     {
         return $this->belongsTo(RencanaAnggaranBelanjaDetil::class, 'barang_rab');
+    }
+
+    public function serah_terima()
+    {
+        return $this->hasMany(SerahTerimaAset::class, 'id_pengadaan', 'id_pengadaan');
     }
 }

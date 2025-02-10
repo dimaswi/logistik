@@ -87,8 +87,8 @@ class PengadaanResource extends Resource
                         ->placeholder('Masukan Perihal')
                         ->columnSpanFull(),
                     Checkbox::make('rab')
-                    ->label('RAB')
-                    ->live(),
+                        ->label('RAB')
+                        ->live(),
                     TableRepeater::make('detil_pengadaan')
                         ->label('Detil Pengadaan Baru')
                         ->relationship('detilPengadaan')
@@ -368,7 +368,40 @@ class PengadaanResource extends Resource
                                 )->setHttpContext($contxt);
                                 return response()->streamDownload(function () use ($pdf) {
                                     echo $pdf->stream();
-                                }, $record->id . '.pdf');
+                                }, 'memo-internal-' . $record->id . '.pdf');
+                            }
+                        ),
+                    Action::make('serah_terima')
+                        ->label('Dokumen Serah Terima')
+                        ->icon('heroicon-o-document-text')
+                        ->color('info')
+                        ->action(
+                            function (Pengadaan $record) {
+                                $data = [
+                                    'kop' => 'kop/01JJAY7AGP7EDZR9XZNKM5E2JM.png',
+                                    'data' => PengadaanDetil::with('pengadaan')
+                                        ->where('id_pengadaan', $record->id)
+                                        ->where('ttd_pemohon', 1)
+                                        ->where('ttd_atasan', 1)
+                                        ->where('ttd_logistik', 1)
+                                        ->where('ttd_keuangan', 1)
+                                        ->get()->toArray(),
+                                ];
+                                $contxt = stream_context_create([
+                                    'ssl' => [
+                                        'verify_peer' => FALSE,
+                                        'verify_peer_name' => FALSE,
+                                        'allow_self_signed' => TRUE
+                                    ]
+                                ]);
+
+                                $pdf = Pdf::setOptions(['isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true])->loadView(
+                                    'logistik.pengadaan.surat.surat_serah_terima',
+                                    $data
+                                )->setHttpContext($contxt);
+                                return response()->streamDownload(function () use ($pdf) {
+                                    echo $pdf->stream();
+                                }, 'dokumen-serah-terima-' . $record->id . '.pdf');
                             }
                         )
                 ])

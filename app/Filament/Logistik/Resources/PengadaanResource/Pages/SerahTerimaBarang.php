@@ -35,12 +35,31 @@ class SerahTerimaBarang extends Page implements HasForms, HasTable
 
     public function table(Table $table): Table
     {
+        if (auth()->user()->hasRole('Logistik')) {
+            $query = PengadaanDetil::with(['pengadaan' => function ($query) {
+                $query->with('pemohon');
+            }])
+                ->wherehas('pengadaan', function ($query) {
+                    $query->where('status', 1);
+                })
+                ->with('rab')
+                ->where('serah_terima', 0);
+        } else {
+            $query = PengadaanDetil::with(['pengadaan' => function ($query) {
+                $query->with('pemohon');
+            }])
+                ->with('rab')
+                ->where('serah_terima', 0)
+                ->whereHas('pengadaan', function ($query) {
+                    $query->where('oleh', auth()->user()->id)->orWhere('kepala', auth()->user()->id);
+                });
+        }
 
         return $table
             ->paginated(false)
-            ->query(PengadaanDetil::with(['pengadaan' => function ($query) {
-                $query->with('pemohon');
-            }])->with('rab')->where('serah_terima', 0))
+            ->query(
+                $query
+            )
 
             ->columns([
                 TextColumn::make('index')
