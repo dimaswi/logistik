@@ -21,6 +21,7 @@ use Filament\Forms\Get;
 use Filament\Notifications\Notification;
 use Icetalker\FilamentTableRepeater\Forms\Components\TableRepeater;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
 class SerahTerimaAset extends Component implements HasForms
@@ -100,7 +101,7 @@ class SerahTerimaAset extends Component implements HasForms
     public function create(): void
     {
         try {
-
+            $pengadaan = Pengadaan::where('id', $this->idpengadaan)->first();
             $pending_item = [];
             $realisasi_item = [];
             foreach ($this->form->getState()['list_barang'] as $key => $value) {
@@ -108,12 +109,23 @@ class SerahTerimaAset extends Component implements HasForms
                     array_push($pending_item, $value['pending']);
                 } else {
                     array_push($realisasi_item, $value['pending']);
+
+                    $unit_aset = DB::table('aset')->where('organisasi', $pengadaan->organisasi)->orderBy('nomor', 'desc')->first();
+
+                    if ($unit_aset == null) {
+                        $nomor = 1;
+                    } else {
+                        $nomor  = $unit_aset->nomor + 1;
+                    }
+
                     Aset::create([
                         'id_pengadaan' => $value['id_pengadaan'],
                         'nama_aset' => $value['nama_barang'],
                         'merk' => $value['merk'],
+                        'nomor' => $nomor,
                         'lokasi' => $value['ruangan'],
-                        'tanggal_pembelian' =>  $this->form->getState()['tanggal_pembelian'],
+                        'organisasi' => $pengadaan->organisasi,
+                        'tanggal_pembelian' =>  $this->form->getState()['tanggal_pembelian'] ,
                         'tanggal_serah_terima' =>  $this->form->getState()['tanggal_serah_terima'],
                         'harga_pembelian' => $value['harga'],
                     ]);

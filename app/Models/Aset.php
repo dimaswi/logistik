@@ -18,7 +18,9 @@ class Aset extends Model
         'id_pengadaan',
         'nama_aset',
         'merk',
+        'nomor',
         'lokasi',
+        'organisasi',
         'harga_pembelian',
         'tanggal_pembelian',
         'tanggal_serah_terima',
@@ -27,5 +29,10 @@ class Aset extends Model
     public function ruangan()
     {
         return $this->belongsTo(Ruangan::class, 'lokasi');
+    }
+
+    public function unit()
+    {
+        return $this->belongsTo(Organisasi::class, 'organisasi');
     }
 }

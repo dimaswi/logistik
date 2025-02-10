@@ -47,6 +47,11 @@ class AsetResource extends Resource
                     ->rowIndex()
                     ->label('No.')
                     ->alignCenter(),
+                TextColumn::make('nomor')
+                    ->formatStateUsing(function ($state, Aset $order) {
+                        return 'INV/'. strtoupper($order->merk) .'/'. str_pad($order->nomor , 2, '0', STR_PAD_LEFT).'/'.$order->unit->kode.'/'.substr($order->tanggal_serah_terima, 0,4);
+                    })
+                    ->badge(),
                 TextColumn::make('nama_aset')
                     ->searchable(),
                 TextColumn::make('merk')
