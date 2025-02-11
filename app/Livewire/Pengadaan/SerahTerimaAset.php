@@ -83,6 +83,15 @@ class SerahTerimaAset extends Component implements HasForms
                                 ->readOnly(),
                             TextInput::make('merk')
                                 ->readOnly(),
+                            TextInput::make('volume')
+                                ->required()
+                                ->placeholder('Masukan Volume'),
+                            TextInput::make('satuan')
+                                ->required()
+                                ->placeholder('Masukan Satuan'),
+                            TextInput::make('kodefikasi')
+                                ->required()
+                                ->placeholder('Masukan Kodefikasi'),
                             Select::make('ruangan')
                                 ->options(Ruangan::where('organisasi', $pengadaan->organisasi)->pluck('nama_ruangan', 'id'))
                                 ->searchable()
@@ -132,6 +141,9 @@ class SerahTerimaAset extends Component implements HasForms
                         'lokasi' => $value['ruangan'],
                         'organisasi' => $pengadaan->organisasi,
                         'tanggal_pembelian' =>  $this->form->getState()['tanggal_pembelian'],
+                        'volume' => $value['volume'],
+                        'satuan' =>  $value['satuan'],
+                        'kodefikasi' =>  $value['kodefikasi'],
                         'tanggal_serah_terima' =>  $this->form->getState()['tanggal_serah_terima'],
                         'harga_pembelian' => $value['harga'],
                     ]);

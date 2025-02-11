@@ -4,6 +4,7 @@ namespace App\Filament\Logistik\Resources;
 
 use App\Filament\Logistik\Resources\PengadaanResource\Pages;
 use App\Filament\Logistik\Resources\PengadaanResource\RelationManagers;
+use App\Models\Aset;
 use App\Models\Organisasi;
 use App\Models\Pengadaan;
 use App\Models\PengadaanDetil;
@@ -380,13 +381,23 @@ class PengadaanResource extends Resource
                                 $data = [
                                     'kop' => 'kop/01JJAY7AGP7EDZR9XZNKM5E2JM.png',
                                     'data' => PengadaanDetil::with('pengadaan')
+                                        ->with('pengadaan.user')
+                                        ->with('pengadaan.pemohon')
+                                        ->with('pengadaan.atasan')
+                                        ->with('pengadaan.atasan.org')
                                         ->where('id_pengadaan', $record->id)
                                         ->where('ttd_pemohon', 1)
                                         ->where('ttd_atasan', 1)
                                         ->where('ttd_logistik', 1)
                                         ->where('ttd_keuangan', 1)
                                         ->get()->toArray(),
+                                    'aset' => Aset::where('id_pengadaan', $record->id)
+                                        ->get()
+                                        ->toArray(),
+                                    'kepala_logistik' => User::where('id', 2)->first(),
+                                    'kepala_keuangan' =>  User::where('id', 6)->first()
                                 ];
+
                                 $contxt = stream_context_create([
                                     'ssl' => [
                                         'verify_peer' => FALSE,
