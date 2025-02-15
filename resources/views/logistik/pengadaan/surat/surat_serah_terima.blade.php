@@ -40,12 +40,12 @@
                 <td rowspan="3" style="vertical-align: top; line-height: 12px">1.</td>
                 <td style="line-height: 12px">Nama</td>
                 <td style="line-height: 12px">:</td>
-                <td style="line-height: 12px">Dimas Wisnu Wirawan</td>
+                <td style="line-height: 12px">{{ $kepala_logistik->name }}</td>
             </tr>
             <tr>
                 <td style="line-height: 12px">NIK</td>
                 <td style="line-height: 12px">:</td>
-                <td style="line-height: 12px">2020.05.12.124</td>
+                <td style="line-height: 12px">{{ $kepala_logistik->nip }}</td>
             </tr>
             <tr>
                 <td style="line-height: 12px">Unit</td>

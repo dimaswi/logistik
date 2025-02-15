@@ -31,10 +31,7 @@
                 Setujui
             </x-filament::button>
         @else
-            <x-filament::button disable icon="heroicon-m-check-circle" wire:click="setujui" type="button"
-                size="sm" color="success">
-                Setujui
-            </x-filament::button>
+
         @endif
 
 
