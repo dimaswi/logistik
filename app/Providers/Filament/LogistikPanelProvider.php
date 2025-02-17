@@ -31,6 +31,7 @@ class LogistikPanelProvider extends PanelProvider
             ->login(Login::class)
             ->breadcrumbs(false)
             ->topNavigation()
+            ->spa()
             ->colors([
                 'primary' => Color::Amber,
             ])
