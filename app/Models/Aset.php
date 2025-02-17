@@ -20,7 +20,6 @@ class Aset extends Model
         'merk',
         'volume',
         'satuan',
-        'kodefikasi',
         'nomor',
         'lokasi',
         'organisasi',

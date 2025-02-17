@@ -68,7 +68,7 @@
                 <td style="line-height: 12px">Unit</td>
                 <td style="line-height: 12px">:</td>
                 <td style="line-height: 12px">{{ $data[0]['pengadaan']['pemohon']['nama'] }} disebut sebagai <b>PIHAK
-                        PERTAMA</b></td>
+                        KEDUA</b></td>
             </tr>
         </table>
 
@@ -102,10 +102,6 @@
                 <th
                     style="text-align:left ;width: 15%;padding-left:5px ;border: 1px solid black; border-collapse: collapse">
                     Satuan</th>
-                <th
-                    style="text-align:left ;width: 20%;padding-left:5px ;border: 1px solid black; border-collapse: collapse">
-                    Kodefikasi
-                </th>
             </thead>
             <tbody>
                 @foreach ($aset as $key => $value)
@@ -120,8 +116,6 @@
                             {{ $value['volume'] }}</td>
                         <td style=" padding-left:5px ;border: 1px solid black; border-collapse: collapse">
                             {{ $value['satuan'] }}</td>
-                        <td style=" padding-left:5px ;border: 1px solid black; border-collapse: collapse">
-                            {{ $value['kodefikasi'] }}</td>
                     </tr>
                 @endforeach
             </tbody>
