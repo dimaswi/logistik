@@ -183,7 +183,7 @@
                     <center>Muhammadiyah Kedungadem</center>
                     <center>
                         <img src="data:image/png;base64, {!! base64_encode(
-                            QrCode::format('png')->size(50)->generate($data[0]['pengadaan']['user']['name']),
+                            QrCode::format('png')->size(50)->generate($data[0]['pengadaan']['atasan']['name']),
                         ) !!} ">
                     </center>
                     <center><b><u>{{ $data[0]['pengadaan']['atasan']['name'] }}</u></b></center>
