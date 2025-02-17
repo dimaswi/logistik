@@ -1,6 +1,6 @@
 <div>
     <form wire:submit="create">
-        @if (auth()->user()->hasRole('Logistik'))
+        @if (auth()->user()->hasRole('Logistik') && $data_pengadaan->ttd_pemohon == 1 && $data_pengadaan->ttd_atasan == 1 && $data_pengadaan->ttd_logistik == 1 && $data_pengadaan->ttd_keuangan == 1)
             {{ $this->form }}
         @else
         @endif
