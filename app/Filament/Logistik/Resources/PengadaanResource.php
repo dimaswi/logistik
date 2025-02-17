@@ -339,7 +339,7 @@ class PengadaanResource extends Resource
                             }
                         ),
                     Action::make('surat')
-                        ->label('Memo Permintaan')
+                        ->label('Memo Permintaan Barang')
                         ->icon('heroicon-o-paper-clip')
                         ->color('primary')
                         ->action(
@@ -414,6 +414,9 @@ class PengadaanResource extends Resource
                                     echo $pdf->stream();
                                 }, 'dokumen-serah-terima-' . $record->id . '.pdf');
                             }
+                        )
+                        ->hidden(
+                            fn (Pengadaan $record) => $record->persetujuan == 0
                         )
                 ])
             ])
