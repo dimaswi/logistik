@@ -233,6 +233,29 @@ class PengadaanResource extends Resource
             ])
             ->actions([
                 ActionGroup::make([
+                    Action::make('terima')
+                        ->label('Serah Terima')
+                        ->color('primary')
+                        ->icon('heroicon-o-inbox-arrow-down')
+                        ->action(
+                            function (Pengadaan $record) {
+                                try {
+
+                                    Notification::make()
+                                        ->title('Berhasil Disembunyikan!')
+                                        ->icon('heroicon-o-check-circle')
+                                        ->iconColor('success')
+                                        ->send();
+                                } catch (\Throwable $th) {
+                                    Notification::make()
+                                        ->title('Gagal!')
+                                        ->body($th->getMessage())
+                                        ->icon('heroicon-o-check-circle')
+                                        ->iconColor('danger')
+                                        ->send();
+                                }
+                            }
+                        ),
                     Tables\Actions\EditAction::make()
                         ->hidden(
                             fn(Pengadaan $record) => $record->oleh != auth()->user()->id
@@ -416,7 +439,7 @@ class PengadaanResource extends Resource
                             }
                         )
                         ->hidden(
-                            fn (Pengadaan $record) => $record->persetujuan == 0
+                            fn(Pengadaan $record) => $record->persetujuan == 0
                         )
                 ])
             ])
